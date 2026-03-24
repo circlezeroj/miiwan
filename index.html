@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美完소년 MIIWAN — 전략 대시보드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07070f;--bg2:#0e0e1c;--bg3:#141428;--bg4:#1a1a30;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+  --text:#e2e0f0;--muted:#6b6885;--dim:#2e2c40;
+  --teal:#00c9a7;--teal2:#00ffd5;--purple:#a78bfa;
+  --coral:#f87171;--amber:#fbbf24;--blue:#60a5fa;
+  --pink:#f472b6;--green:#4ade80;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.75rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{font-family:'Space Mono',monospace;font-size:12px;color:var(--teal);letter-spacing:.12em}
+.logo em{color:var(--muted);font-style:normal}
+.nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav button{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Noto Sans KR';transition:all .18s}
+.nav button.on{background:var(--teal);color:#000;border-color:var(--teal)}
+
+.panel{display:none;padding:1.75rem}.panel.on{display:block}
+
+.sec{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--teal);text-transform:uppercase;margin:2rem 0 .75rem}
+.sec:first-child{margin-top:0}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.4rem;margin-bottom:10px}
+.ct{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px}
+.cb{font-size:13px;color:#9e9bb8;line-height:1.7}
+
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+
+.bdg{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin:2px;font-family:'Space Mono'}
+.bt{background:rgba(0,201,167,.12);color:var(--teal2)}
+.bp{background:rgba(167,139,250,.12);color:var(--purple)}
+.bc{background:rgba(248,113,113,.12);color:var(--coral)}
+.ba{background:rgba(251,191,36,.12);color:var(--amber)}
+.bb{background:rgba(96,165,250,.12);color:var(--blue)}
+.bpk{background:rgba(244,114,182,.12);color:var(--pink)}
+.bgr{background:rgba(74,222,128,.12);color:var(--green)}
+.bg{background:rgba(255,255,255,.06);color:var(--muted)}
+
+.div{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
+
+/* ── ALGO PANEL ── */
+.stage-flow{display:flex;align-items:center;gap:0;margin-bottom:1.5rem;overflow-x:auto;padding-bottom:4px}
+.stage{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;text-align:center;min-width:130px;flex-shrink:0}
+.stage-num{font-family:'Space Mono',monospace;font-size:10px;color:var(--teal);font-weight:700;margin-bottom:4px}
+.stage-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
+.stage-sub{font-size:11px;color:var(--muted);line-height:1.4}
+.arrow{color:var(--dim);font-size:18px;padding:0 6px;flex-shrink:0}
+
+.ch-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1rem}
+.ch-table th{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);letter-spacing:.06em}
+.ch-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:#9e9bb8;vertical-align:top}
+.ch-table tr:last-child td{border-bottom:none}
+.ch-table td:first-child{font-weight:700;color:var(--text);white-space:nowrap}
+.star{color:var(--teal);font-size:11px}
+
+.comm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.comm-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.4rem}
+.comm-label{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:'Space Mono';margin-bottom:8px}
+.comm-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.comm-type{font-size:11px;color:var(--muted);margin-bottom:8px}
+.comm-body{font-size:12px;color:#9e9bb8;line-height:1.6;margin-bottom:8px}
+.comm-strat{font-size:12px;padding:7px 10px;background:rgba(0,201,167,.06);border-left:2px solid var(--teal);border-radius:0 6px 6px 0;color:var(--teal2);line-height:1.5}
+.comm-section-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:1.25rem 0 .6rem;padding:5px 10px;background:var(--bg3);border-radius:6px;display:inline-block}
+
+.setup-table{width:100%;border-collapse:collapse;font-size:13px}
+.setup-table th{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);letter-spacing:.06em}
+.setup-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:#9e9bb8;vertical-align:top}
+.setup-table tr:last-child td{border-bottom:none}
+.setup-table td:first-child{font-weight:700;color:var(--text);white-space:nowrap}
+
+.alert-box{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:.9rem 1.2rem;font-size:13px;color:#9e9bb8;line-height:1.7;margin-bottom:1rem}
+.alert-box strong{color:var(--amber)}
+
+/* ── CHEM TABLE ── */
+.chem-scroll{overflow-x:auto;margin-bottom:.75rem}
+.ctbl{border-collapse:separate;border-spacing:4px;min-width:560px;width:100%;table-layout:fixed}
+.ctbl th{font-size:11px;font-weight:500;color:var(--muted);padding:7px 4px;text-align:center;vertical-align:bottom}
+.ctbl .rh{text-align:right;padding-right:10px;font-size:11px;font-weight:700;color:#7c7a95;white-space:nowrap;width:68px}
+.cell{border-radius:8px;padding:8px 4px;text-align:center;font-size:10px;line-height:1.5;cursor:pointer;transition:transform .13s,opacity .13s}
+.cell:hover:not(.cs){transform:scale(1.05);opacity:.82}
+.cs{background:var(--bg3);color:var(--dim);cursor:default}
+.chot{background:rgba(167,139,250,.14);color:var(--purple);border:1px solid rgba(167,139,250,.28);font-weight:700}
+.cwarm{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.ccool{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
+.ctns{background:rgba(244,114,182,.1);color:var(--pink);border:1px solid rgba(244,114,182,.2)}
+.csoft{background:rgba(0,201,167,.1);color:var(--teal);border:1px solid rgba(0,201,167,.2)}
+.cpop{display:none;margin-top:1rem}.cpop.show{display:block}
+.cpop .card{border-left:3px solid var(--teal)}
+
+.lgd{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:.9rem}
+.ld{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+
+.rnk{border-radius:12px;padding:1.1rem 1.4rem;margin-bottom:10px;background:var(--bg2);border:1px solid var(--border)}
+.rnk.r1{border-left:4px solid var(--coral)}.rnk.r2{border-left:4px solid var(--amber)}.rnk.r3{border-left:4px solid var(--blue)}
+.rtag{font-family:'Space Mono';font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:.05em}
+.rtitle{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px}
+.rbody{font-size:13px;color:#9e9bb8;line-height:1.7}
+
+/* ── DO/DONT (NEW STYLE) ── */
+.mtabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:1.1rem}
+.mtab{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--muted);font-family:'Noto Sans KR';transition:all .18s}
+.mtab.on{color:#000;border-color:transparent}
+.mpnl{display:none}.mpnl.on{display:block}
+
+.member-block{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.member-top{display:flex;align-items:center;gap:14px;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.mname{font-size:16px;font-weight:700;color:var(--text)}
+.mkw{font-size:12px;font-weight:700;margin-top:3px;font-family:'Space Mono'}
+.mdesc{font-size:11px;color:var(--muted);margin-top:2px}
+
+.dd-row{display:grid;grid-template-columns:1fr 1fr}
+.dd-col{padding:1.1rem 1.4rem}
+.dd-col:first-child{border-right:1px solid var(--border)}
+.dd-col-label{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.9rem;display:flex;align-items:center;gap:6px}
+.dd-items{display:flex;flex-direction:column;gap:8px}
+.dd-item{font-size:13px;color:#9e9bb8;line-height:1.6;padding-left:0}
+.dd-item strong{color:var(--text);font-weight:700}
+
+/* ── KPI PANEL ── */
+.stat4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
+.stat{background:var(--bg3);border-radius:10px;padding:.9rem;text-align:center;border:1px solid var(--border)}
+.sval{font-size:22px;font-weight:700;font-family:'Space Mono';color:var(--teal2)}
+.slb{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.strend{font-size:10px;font-weight:700;margin-top:4px;font-family:'Space Mono'}
+.up{color:var(--green)}.dn{color:var(--coral)}
+
+.pcrd{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.phdr{display:flex;align-items:center;gap:12px;padding:.9rem 1.4rem;border-bottom:1px solid var(--border)}
+.picon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pname{font-size:15px;font-weight:700;color:var(--text)}
+.pmau{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Space Mono'}
+.pbody{padding:.9rem 1.4rem}
+.krow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.krow:last-child{border-bottom:none}
+.kname{font-size:13px;color:#9e9bb8;flex:1;padding-right:12px}
+.kval{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--teal2);text-align:right;white-space:nowrap}
+.knew{font-size:11px;color:var(--muted);margin-top:2px;text-align:right}
+.livelink{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--teal);font-family:'Space Mono';text-decoration:none;padding:3px 9px;border-radius:5px;border:1px solid rgba(0,201,167,.25);margin-left:auto;transition:all .15s}
+.livelink:hover{background:rgba(0,201,167,.1)}
+.livdot{width:6px;height:6px;border-radius:50%;background:var(--teal2);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.mtbl{width:100%;border-collapse:collapse;font-size:13px}
+.mtbl th{font-family:'Space Mono';font-size:9px;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);letter-spacing:.06em}
+.mtbl td{padding:10px 10px;border-bottom:1px solid var(--border);color:#9e9bb8;vertical-align:top}
+.mtbl tr:last-child td{border-bottom:none}
+.mtbl td:first-child{color:var(--text);font-weight:700;font-size:12px;white-space:nowrap}
+.trig{color:var(--amber);font-family:'Space Mono';font-size:11px;line-height:1.6}
+.tact{color:var(--teal2);font-weight:700;font-size:13px}
+.ph1{background:rgba(248,113,113,.12);color:var(--coral)}.ph2{background:rgba(251,191,36,.12);color:var(--amber)}
+.ph3{background:rgba(96,165,250,.12);color:var(--blue)}.ph4{background:rgba(74,222,128,.12);color:var(--green)}
+.phasebdg{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:'Space Mono';margin-bottom:4px}
+
+.insight{border-radius:10px;padding:1rem 1.4rem;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);margin-top:1.25rem}
+.ititle{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:6px}
+.ibody{font-size:13px;color:#9e9bb8;line-height:1.7}
+.ibody strong{color:var(--text)}
+.note{font-size:11px;color:var(--muted);margin-top:8px;font-family:'Space Mono';line-height:1.6}
+
+@media(max-width:620px){
+  .stat4,.g3,.g4,.comm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g2,.dd-row{grid-template-columns:1fr}
+  .dd-col:first-child{border-right:none;border-bottom:1px solid var(--border)}
+  .panel{padding:1rem}
+  .topbar{flex-direction:column;gap:.6rem;padding:.75rem 1rem}
+  .stage-flow{gap:0}
+  .ctbl th,.ctbl td{font-size:9px;padding:5px 2px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">美完少年 MIIWAN <em>/ Strategy Dashboard</em></div>
+  <div class="nav">
+    <button class="on" onclick="sw('algo',this)">과제 1 — 알고리즘</button>
+    <button onclick="sw('chem',this)">과제 2 — 케미 & 라방</button>
+    <button onclick="sw('kpi',this)">과제 3 — KPI</button>
+  </div>
+</div>
+
+
+<!-- ═══════════ 과제 1 ═══════════ -->
+<div id="p-algo" class="panel on">
+
+  <div class="sec">팬 유입 → 전환 4단계 구조</div>
+  <div class="stage-flow">
+    <div class="stage">
+      <div class="stage-num">STEP 1</div>
+      <div class="stage-title">알고리즘 노출</div>
+      <div class="stage-sub">숏폼·쇼츠<br>케미 클립 접촉</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="stage-num">STEP 2</div>
+      <div class="stage-title">서사 탐색</div>
+      <div class="stage-sub">라방·애니메이션<br>세계관 몰입</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="stage-num">STEP 3</div>
+      <div class="stage-title">팬 전환</div>
+      <div class="stage-sub">Weverse/팬카페 가입<br>버블 첫 경험 설계</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="stage-num">STEP 4</div>
+      <div class="stage-title">충성 팬 정착</div>
+      <div class="stage-sub">라방 정기 시청<br>2차 창작 참여</div>
+    </div>
+  </div>
+
+  <div class="alert-box">
+    <strong>버추얼 아이돌 특이사항</strong> — 일반 아이돌과 달리 MV 퀄리티보다 <strong>라방 클립(오류·케미·서사 장면)</strong>이 초반 팬 유입 핵심 채널. 팬 활동도 음방 총공보다 <strong>2차 창작·클립 제작·팬 영상</strong> 비중이 높음. 팬덤 결집에 3~6개월 소요를 전제로 전략 수립.
+  </div>
+
+  <div class="sec">채널 우선순위 매트릭스</div>
+  <div style="overflow-x:auto">
+    <table class="ch-table">
+      <thead><tr>
+        <th>채널</th>
+        <th>적합성</th>
+        <th>미완소년 활용 포인트</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>유튜브 쇼츠</td>
+          <td><span class="star">★★★★★</span></td>
+          <td class="cb">케미 클립 (당황즈·균열즈) 15~30초 편집 → 매일 업로드. 버추얼 아이돌 알고리즘 진입 최단 경로</td>
+        </tr>
+        <tr>
+          <td>틱톡</td>
+          <td><span class="star">★★★★★</span></td>
+          <td class="cb">나이선 "흥얼거리다 들키기", 서사 미스터리 연속 클립. MZ세대 신규 유입</td>
+        </tr>
+        <tr>
+          <td>유튜브 라방</td>
+          <td><span class="star">★★★★★</span></td>
+          <td class="cb">버추얼 아이돌 핵심 콘텐츠 — 주 2회 이상 유지 필수. 케미 세션 의도적 배치</td>
+        </tr>
+        <tr>
+          <td>X (트위터)</td>
+          <td><span class="star">★★★★☆</span></td>
+          <td class="cb">티저 드랍 시 국내외 동시 RT. 일본어 계정 병행 필수 (4개국어 강점). 여초 팬덤 허브</td>
+        </tr>
+        <tr>
+          <td>인스타그램</td>
+          <td><span class="star">★★★☆☆</span></td>
+          <td class="cb">서사 삽화·멤버 캐릭터 비하인드 배포. 비주얼 아카이브 역할</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert-box">
+    <strong>🚨 4월 경쟁 시즌 대응</strong> — 4월은 컴백 그룹 집중 시즌. 대형 그룹 MV와 정면 알고리즘 경쟁 불리. 대응 방향: <strong>"서사 떡밥 클립"으로 틈새 공략</strong> — 나이선 퍼즐 서사의 미스터리 요소를 15초 클립으로 쪼개 연속 업로드. "이 그룹 세계관 뭔데?" 유발 → 유튜브 탐색 탭 알고리즘 진입.
+  </div>
+
+  <div class="sec">초반 타야 하는 커뮤니티</div>
+
+  <div class="comm-section-label">남성 커뮤니티 — 버추얼 아이돌 기반</div>
+  <div class="comm-grid" style="margin-bottom:1rem">
+    <div class="comm-card">
+      <div class="comm-name">디시 버스갤</div>
+      <div class="comm-type">버추얼 스트리머 미니 갤러리</div>
+      <div class="comm-body">버추얼 아이돌 여론 1번지. 이세돌·PLAVE 등 주요 케이스 모두 이곳에서 화제 형성.</div>
+      <div class="comm-strat">데뷔 1~2주 전 "이런 버추얼 아이돌 데뷔한다는데" 자연 화제글 시딩. 未完 세계관·퍼즐 서사의 독창성을 떡밥으로 활용.</div>
+    </div>
+    <div class="comm-card">
+      <div class="comm-name">아카라이브 버튜버 채널</div>
+      <div class="comm-type">버추얼 스트리머 서브컬처 팬덤</div>
+      <div class="comm-body">서사 기반 세계관 콘텐츠에 높은 반응. 버추얼 아이돌에 친화적 커뮤니티.</div>
+      <div class="comm-strat">세계관 관련 토론글 자연 침투. "미완소년 퍼즐 서사 독창성" 어필.</div>
+    </div>
+  </div>
+
+  <div class="comm-section-label">여성 커뮤니티 — 버추얼 아이돌 최대 성장 팬층</div>
+  <div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:.8rem 1.2rem;font-size:12px;color:#9e9bb8;line-height:1.6;margin-bottom:.9rem">
+    <span style="color:var(--purple);font-weight:700">핵심 근거</span> — PLAVE는 "여초 팬덤+남돌 빌드로 초대박났다"는 평가가 지배적 (루리웹 팬덤 분석 2025). 버추얼 아이돌의 여초 공략이 일반 남돌과 동일한 수준으로 중요. 특히 <strong style="color:var(--text)">브로맨스 서사, 세계관 몰입, 2차 창작 문화</strong>가 여초 팬덤과 강하게 맞닿음. 실제 K-POP 소속사들도 '브로맨스' 마케팅을 의도적으로 밀어주는 전략 사용.
+  </div>
+  <div class="comm-grid">
+    <div class="comm-card">
+      <div class="comm-name">X (트위터) 여성 K-POP 팬덤</div>
+      <div class="comm-type">여초 K-POP 팬덤 핵심 허브</div>
+      <div class="comm-body">케미 편집 클립, 팬아트, 팬픽이 자생적으로 생산·확산되는 공간.</div>
+      <div class="comm-strat">#美完소년 #MIIWAN 해시태그 통일. 일본어 계정 5~10개 사전 활성화. 케미 클립 RT 유도 캠페인.</div>
+    </div>
+    <div class="comm-card">
+      <div class="comm-name">팬픽·남돌물 커뮤니티</div>
+      <div class="comm-type">리디 · 포스타입 · X 팬픽 계정</div>
+      <div class="comm-body">남자 아이돌 세계관+브로맨스 서사를 덕질하는 여성향 독자층. 미완소년 케미 구조가 이 층의 취향과 직접 맞닿음.</div>
+      <div class="comm-strat">멤버 케미를 콘텐츠에서 선명하게 노출. 2차 창작을 허용·장려하는 소속사 입장 표명.</div>
+    </div>
+    <div class="comm-card">
+      <div class="comm-name">트위터 여성향 서브컬처 팬덤</div>
+      <div class="comm-type">일본 서브컬처 → K-VTuber 유입 경로</div>
+      <div class="comm-body">앙상블 스타즈·아이마스 등 일본 서브컬처에서 한국 버추얼 아이돌로 유입되는 여성 팬층.</div>
+      <div class="comm-strat">일본어 공식 계정 운영. 4개국어 멤버 강점으로 일본 버추얼 아이돌 팬덤 교차 공략.</div>
+    </div>
+    <div class="comm-card">
+      <div class="comm-name">유튜브 K-POP 리액터 네트워크</div>
+      <div class="comm-type">글로벌 해외 팬 유입 경로</div>
+      <div class="comm-body">리액터들이 영상 만들면 해외 팬덤 자동 확산. "버추얼인데 이 정도야?" 반응이 신규 유입으로 직결.</div>
+      <div class="comm-strat">데뷔 MV 발매 전 주요 K-POP 리액터 30~50명에게 사전 영상 발송.</div>
+    </div>
+  </div>
+
+  <div class="sec">초반 채널 세팅 — 실행 방안</div>
+  <div style="overflow-x:auto">
+    <table class="setup-table">
+      <thead><tr>
+        <th>항목</th>
+        <th>방법</th>
+        <th>목적</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>유튜브 채널 초기 환경</td>
+          <td class="cb">티저 영상 공개 전 채널 구독자 최소 1~2만 확보</td>
+          <td class="cb">"음지 채널" 첫인상 방지</td>
+        </tr>
+        <tr>
+          <td>네이버 검색 최적화</td>
+          <td class="cb">"미완소년", "미완소년 멤버", "MIIWAN" 키워드 블로그 포스팅 10개+ 선제 배포</td>
+          <td class="cb">검색 시 빈 결과 방지</td>
+        </tr>
+        <tr>
+          <td>커뮤니티 시딩</td>
+          <td class="cb">버스갤·아카라이브에 데뷔 1~2주 전 자연스러운 화제글 게시</td>
+          <td class="cb">오가닉 관심 유도</td>
+        </tr>
+        <tr>
+          <td>X 시딩 계정 (선택)</td>
+          <td class="cb">팬 계정 형태 다수 계정 운영. 일본어 계정 5~10개 사전 활성화</td>
+          <td class="cb">트위터 트렌딩 진입 기반</td>
+        </tr>
+        <tr>
+          <td>숏폼 사전 준비</td>
+          <td class="cb">당황즈·균열즈 케미 클립 5개 이상 데뷔 당일 동시 업로드용으로 사전 편집 완료</td>
+          <td class="cb">데뷔 당일 알고리즘 즉시 진입</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<!-- ═══════════ 과제 2 ═══════════ -->
+<div id="p-chem" class="panel">
+
+  <div class="sec">5×5 케미 관계도 — 셀 클릭 시 상세 펼쳐짐</div>
+  <div class="lgd">
+    <span><span class="ld" style="background:rgba(167,139,250,.6)"></span>핵심 케미</span>
+    <span><span class="ld" style="background:rgba(74,222,128,.6)"></span>따뜻한 케미</span>
+    <span><span class="ld" style="background:rgba(96,165,250,.6)"></span>조용한 케미</span>
+    <span><span class="ld" style="background:rgba(244,114,182,.6)"></span>반전·긴장 케미</span>
+    <span><span class="ld" style="background:rgba(0,201,167,.6)"></span>신뢰 케미</span>
+  </div>
+  <div class="chem-scroll">
+    <table class="ctbl">
+      <thead><tr>
+        <th></th>
+        <th>임온<br><span style="font-size:9px;color:var(--dim);font-weight:400">감성·재도전</span></th>
+        <th>나이선<br><span style="font-size:9px;color:var(--dim);font-weight:400">내성·몽환</span></th>
+        <th>마하진<br><span style="font-size:9px;color:var(--dim);font-weight:400">쾌활·리더</span></th>
+        <th>안석우<br><span style="font-size:9px;color:var(--dim);font-weight:400">과묵·따뜻</span></th>
+        <th>원주율<br><span style="font-size:9px;color:var(--dim);font-weight:400">귀여움·팬사랑</span></th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="rh">임온</td>
+          <td class="cell cs">—</td>
+          <td class="cell ccool" onclick="showC('임온↔나이선')">말없이 통하는<br><b>소울메이트즈</b></td>
+          <td class="cell cwarm" onclick="showC('임온↔마하진')">든든한 형동생<br><b>안심즈</b></td>
+          <td class="cell ccool" onclick="showC('임온↔안석우')">조용한 존중<br><b>고요즈</b></td>
+          <td class="cell cwarm" onclick="showC('임온↔원주율')">막내가 챙기는<br><b>뒤집기즈</b></td>
+        </tr>
+        <tr>
+          <td class="rh">나이선</td>
+          <td class="cell ccool" onclick="showC('임온↔나이선')">소울메이트즈</td>
+          <td class="cell cs">—</td>
+          <td class="cell chot" onclick="showC('나이선↔마하진')">쾌활이 소심 깨움<br><b>해바라기즈 🟡</b></td>
+          <td class="cell ctns" onclick="showC('나이선↔안석우')">냉소가 툭툭<br><b>어긋즈 🟢</b></td>
+          <td class="cell chot" onclick="showC('나이선↔원주율')">껍데기를 깨주는<br><b>개구쟁이즈</b></td>
+        </tr>
+        <tr>
+          <td class="rh">마하진</td>
+          <td class="cell cwarm" onclick="showC('임온↔마하진')">안심즈</td>
+          <td class="cell chot" onclick="showC('나이선↔마하진')">해바라기즈 🟡</td>
+          <td class="cell cs">—</td>
+          <td class="cell csoft" onclick="showC('마하진↔안석우')">눈빛만으로<br><b>무언즈</b></td>
+          <td class="cell chot" onclick="showC('마하진↔원주율')">리더의 균열<br><b>균열즈</b></td>
+        </tr>
+        <tr>
+          <td class="rh">안석우</td>
+          <td class="cell ccool" onclick="showC('임온↔안석우')">고요즈</td>
+          <td class="cell ctns" onclick="showC('나이선↔안석우')">어긋즈 🟢</td>
+          <td class="cell csoft" onclick="showC('마하진↔안석우')">무언즈</td>
+          <td class="cell cs">—</td>
+          <td class="cell chot" onclick="showC('안석우↔원주율')">최강 브로<br><b>당황즈 🟣</b></td>
+        </tr>
+        <tr>
+          <td class="rh">원주율</td>
+          <td class="cell cwarm" onclick="showC('임온↔원주율')">뒤집기즈</td>
+          <td class="cell chot" onclick="showC('나이선↔원주율')">개구쟁이즈</td>
+          <td class="cell chot" onclick="showC('마하진↔원주율')">균열즈</td>
+          <td class="cell chot" onclick="showC('안석우↔원주율')">당황즈 🟣</td>
+          <td class="cell cs">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="cpop" class="cpop"><div class="card"><div id="cpopcnt"></div></div></div>
+
+  <div class="div"></div>
+
+  <div class="sec">소속사 케미 밀기 — 시기별 우선순위</div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1rem">
+    <div class="stat"><div class="sval">61%</div><div class="slb">특정 케미로 입덕<br>(K-POP 팬덤 조사)</div></div>
+    <div class="stat"><div class="sval">2.3x</div><div class="slb">2인 케미 클립<br>공유율 (단독 대비)</div></div>
+    <div class="stat"><div class="sval">3개월</div><div class="slb">대표 케미 각인<br>목표 기간</div></div>
+  </div>
+
+  <div class="rnk r1">
+    <div class="rtag">데뷔 직후 (4~6월) — 즉각 바이럴</div>
+    <div class="rtitle">🟣 1순위: 당황즈 (안석우↔원주율)</div>
+    <div class="rbody">냉소형 vs 에너자이저 — K-POP 최검증 조합. PLAVE 야타즈(밤비↔은호), TXT 태현↔수빈 동일 구도로 데뷔 초 클립 수백만 뷰. 안석우가 당황하는 순간이 짤 생산 원천. 숏폼 5개 이상 이 케미로 먼저 제작.</div>
+    <div style="margin-top:8px"><span class="bdg bc">숏폼 최적</span><span class="bdg ba">즉각 클립화</span><span class="bdg bgr">신규 유입 최고</span></div>
+  </div>
+  <div class="rnk r2">
+    <div class="rtag">1~3개월 후 — 세계관 팬덤 전환</div>
+    <div class="rtitle">🟡 2순위: 해바라기즈 (나이선↔마하진)</div>
+    <div class="rbody">마하진의 플러팅에 나이선이 어쩔 줄 몰라하다 조금씩 가까워지는 서사. PLAVE 맛탕즈(예준↔노아)와 유사 구도. 나이선 未完 성장 서사와 직결. 단체 라방·세계관 애니메이션에 배치.</div>
+    <div style="margin-top:8px"><span class="bdg bp">세계관 연동</span><span class="bdg bt">성장 서사</span></div>
+  </div>
+  <div class="rnk r3">
+    <div class="rtag">팬덤 형성 후 — 자연 발생 대기</div>
+    <div class="rtitle">🟢 3순위: 어긋즈 (나이선↔안석우)</div>
+    <div class="rbody">차갑게 툭툭 건드리는 안석우, 더 소심해지는 나이선. 결국 안석우가 가장 많이 신경 쓰는 반전. PLAVE 뿐라인(노아↔밤비)과 동일 원리. 인위적 세팅은 역효과 — 나왔을 때 편집으로만 살려줄 것.</div>
+    <div style="margin-top:8px"><span class="bdg bb">자연 발생</span><span class="bdg bpk">편집으로만 강조</span></div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- 멤버별 Do/Don't -->
+  <div class="sec">멤버별 라이브방송 가이드라인</div>
+  <div class="mtabs">
+    <button class="mtab on" style="background:#f472b6;color:#000;border-color:#f472b6" onclick="swm('임온',this,'#f472b6')">임온</button>
+    <button class="mtab" onclick="swm('나이선',this,'#60a5fa')">나이선</button>
+    <button class="mtab" onclick="swm('마하진',this,'#f87171')">마하진</button>
+    <button class="mtab" onclick="swm('안석우',this,'#94a3b8')">안석우</button>
+    <button class="mtab" onclick="swm('원주율',this,'#fbbf24')">원주율</button>
+  </div>
+
+  <!-- 임온 -->
+  <div id="m-임온" class="mpnl on">
+    <div class="member-block">
+      <div class="member-top">
+        <div class="av" style="background:rgba(244,114,182,.15);color:#f472b6">임온</div>
+        <div>
+          <div class="mname">임온</div>
+          <div class="mkw" style="color:#f472b6">키워드: 섬세함</div>
+          <div class="mdesc">감성형 · 오디션 탈락 후 재도전 · 댄서</div>
+        </div>
+      </div>
+      <div class="dd-row">
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(74,222,128,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green);font-weight:700">DO</span>
+            <span style="color:var(--green)">해야 할 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">감정이 흔들리는 순간을 있는 그대로 보여주기. <strong>섬세한 감정 표현</strong>이 임온의 강점 — 완벽하게 괜찮은 척 하지 않기.</div>
+            <div class="dd-item">댄서 정체성을 <strong>무의식적 동작</strong>(손가락 박자, 어깨 리듬)으로 자연스럽게 노출하기.</div>
+            <div class="dd-item">채팅을 소리 내어 읽고 닉네임을 <strong>직접 호명</strong>하기. 10분마다 최소 1회.</div>
+          </div>
+        </div>
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(248,113,113,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--coral);font-weight:700">X</span>
+            <span style="color:var(--coral)">하면 안 될 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">라방에서 <strong>특정 팬을 대놓고 편애</strong>하거나 특정 닉네임만 반복 호명하지 않기.</div>
+            <div class="dd-item"><strong>다른 멤버를 직접 비교</strong>하거나 순위를 매기는 발언하지 않기. ("누가 더 잘해요?" 등)</div>
+            <div class="dd-item">클로징을 <strong>매번 같은 패턴</strong>으로 끝내지 않기. 루틴화되면 기억에 남지 않음.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 나이선 -->
+  <div id="m-나이선" class="mpnl">
+    <div class="member-block">
+      <div class="member-top">
+        <div class="av" style="background:rgba(96,165,250,.15);color:#60a5fa">나이선</div>
+        <div>
+          <div class="mname">나이선</div>
+          <div class="mkw" style="color:#60a5fa">키워드: 내성적</div>
+          <div class="mdesc">극도로 내성적 · 억눌린 음악 본능 · 몽환적</div>
+        </div>
+      </div>
+      <div class="dd-row">
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(74,222,128,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green);font-weight:700">DO</span>
+            <span style="color:var(--green)">해야 할 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">칭찬받으면 <strong>귀/볼 빨개지는 반응</strong>을 시그니처로 만들기. 반복 등장하는 신체 반응이 팬덤 언어가 됨.</div>
+            <div class="dd-item">이야기 중 <strong>무의식적으로 노래를 흘리다 들키는 순간</strong> 설계하기. 멈추면서 당황하는 표정까지 한 세트.</div>
+            <div class="dd-item"><strong>침묵을 두려워하지 않기.</strong> 말이 막혀 잠시 멈추는 순간을 메우려 하지 말 것.</div>
+          </div>
+        </div>
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(248,113,113,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--coral);font-weight:700">X</span>
+            <span style="color:var(--coral)">하면 안 될 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">라방 중 <strong>갑자기 자신감 넘치게</strong> 채팅을 주도하거나 밝게 에너지를 끌어올리지 않기.</div>
+            <div class="dd-item"><strong>팬들의 과도한 질문</strong>(사생활, 외모 평가 등)에 당황한 티를 너무 크게 내지 않기. 담담하게 받아넘기는 법 준비.</div>
+            <div class="dd-item">다음 방송 일정을 <strong>확정적으로 약속</strong>하지 않기. "기회가 되면 또 켤게요" 수준 유지.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 마하진 -->
+  <div id="m-마하진" class="mpnl">
+    <div class="member-block">
+      <div class="member-top">
+        <div class="av" style="background:rgba(248,113,113,.15);color:#f87171">마하진</div>
+        <div>
+          <div class="mname">마하진 (리더)</div>
+          <div class="mkw" style="color:#f87171">키워드: 쾌활함</div>
+          <div class="mdesc">쾌활함 · 센스있음 · 팀 에너지를 만드는 리더</div>
+        </div>
+      </div>
+      <div class="dd-row">
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(74,222,128,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green);font-weight:700">DO</span>
+            <span style="color:var(--green)">해야 할 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">팬 댓글에 <strong>빠르고 센스있게</strong> 받아치기. 예상치 못한 방향으로 연결하는 재치가 마하진만의 강점.</div>
+            <div class="dd-item">라방 중간에 <strong>즉흥 미니게임이나 챌린지</strong> 던지기. 채팅에 "이름 첫 글자 치세요" 등 참여 유도.</div>
+            <div class="dd-item">쾌활하게 진행하다 <strong>라방 말미에 짧은 무게 한 마디</strong> 남기기. 팬들이 리더의 내면을 상상하게 만드는 장치.</div>
+          </div>
+        </div>
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(248,113,113,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--coral);font-weight:700">X</span>
+            <span style="color:var(--coral)">하면 안 될 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">라방 내내 <strong>리더 역할만 수행</strong>하지 않기. 진행만 하는 사람이 되면 마하진의 개인 매력이 사라짐.</div>
+            <div class="dd-item">아직 라방을 안 한 <strong>다른 멤버의 서사를 먼저 언급하거나 스포</strong>하지 않기.</div>
+            <div class="dd-item">팬들의 <strong>"누가 더 좋아요?" 식 비교 질문</strong>에 특정 멤버 지목하지 않기. "다들 달라서 다 좋아"로 자연스럽게 넘기기.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 안석우 -->
+  <div id="m-안석우" class="mpnl">
+    <div class="member-block">
+      <div class="member-top">
+        <div class="av" style="background:rgba(148,163,184,.15);color:#94a3b8">안석우</div>
+        <div>
+          <div class="mname">안석우</div>
+          <div class="mkw" style="color:#94a3b8">키워드: 과묵함</div>
+          <div class="mdesc">과묵함 · 따뜻함 · 냉정해 보이지만 가장 깊이 챙기는</div>
+        </div>
+      </div>
+      <div class="dd-row">
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(74,222,128,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green);font-weight:700">DO</span>
+            <span style="color:var(--green)">해야 할 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">팬을 챙길 때 <strong>쿨한 척하며 간접적으로</strong> 챙기기. "그건 그렇고, 오늘 밥은?" 패턴 반복.</div>
+            <div class="dd-item"><strong>말을 아끼고 한 마디를 무겁게</strong> 쓰기. 채팅 반응 비율 70% 이상 유지.</div>
+            <div class="dd-item"><strong>웃음을 참다가 실패하는 순간</strong> 의도적으로 설계하기. 원주율 이야기나 팬의 엉뚱한 댓글이 적기.</div>
+          </div>
+        </div>
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(248,113,113,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--coral);font-weight:700">X</span>
+            <span style="color:var(--coral)">하면 안 될 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">라방 내내 <strong>냉소만 유지</strong>하지 않기. 마지막에 반드시 따뜻한 한 마디로 끝내기.</div>
+            <div class="dd-item">팬들에게 <strong>"사랑해요"를 직접적으로</strong> 말하지 않기. 강렬한 애정 표현은 아껴뒀다 중요한 순간 1번만.</div>
+            <div class="dd-item">다른 멤버처럼 <strong>밝게 굴거나 에너자이저 흉내</strong> 내지 않기. 건조한 안석우의 방식을 지킬 것.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 원주율 -->
+  <div id="m-원주율" class="mpnl">
+    <div class="member-block">
+      <div class="member-top">
+        <div class="av" style="background:rgba(251,191,36,.15);color:#fbbf24">원주율</div>
+        <div>
+          <div class="mname">원주율</div>
+          <div class="mkw" style="color:#fbbf24">키워드: 귀여움</div>
+          <div class="mdesc">귀여움 · 팬 사랑 · 밝음 뒤에 진지한 내면이 있는 막내</div>
+        </div>
+      </div>
+      <div class="dd-row">
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(74,222,128,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green);font-weight:700">DO</span>
+            <span style="color:var(--green)">해야 할 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">팬 닉네임을 기억해서 다음 방송에 <strong>직접 언급</strong>하기. "저번에도 오셨던 (닉네임)님이죠?" 개인화된 팬 사랑.</div>
+            <div class="dd-item"><strong>엉뚱한 연결고리</strong>로 분위기 전환하기. 이 패턴이 반복될수록 "원주율스럽다"는 팬덤 언어 생성.</div>
+            <div class="dd-item">라방 중후반에 <strong>진심 한 마디</strong>를 반드시 넣기. 1회, 과하지 않게.</div>
+          </div>
+        </div>
+        <div class="dd-col">
+          <div class="dd-col-label">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(248,113,113,.15);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--coral);font-weight:700">X</span>
+            <span style="color:var(--coral)">하면 안 될 것</span>
+          </div>
+          <div class="dd-items">
+            <div class="dd-item">라방 내내 <strong>에너자이저로만</strong> 있지 않기. 중후반에 반드시 톤을 낮추는 구간 설계.</div>
+            <div class="dd-item">다른 멤버를 <strong>선 넘어 놀리거나</strong> 흉내 내지 않기. 해당 멤버 팬과의 갈등 발생 가능.</div>
+            <div class="dd-item"><strong>"사랑해요"를 매번 같은 방식</strong>으로 반복하지 않기. 루틴화되면 진심 희석.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════ 과제 3 ═══════════ -->
+<div id="p-kpi" class="panel">
+
+  <div class="sec">국내 음원 스트리밍 시장 현황 — 2025년 기준</div>
+  <div class="stat4">
+    <div class="stat"><div class="sval">42%</div><div class="slb">유튜브뮤직<br>점유율 1위</div><div class="strend up">↑ +19%p (4년)</div></div>
+    <div class="stat"><div class="sval">26%</div><div class="slb">멜론<br>점유율 2위</div><div class="strend dn">↓ -32%p (4년)</div></div>
+    <div class="stat"><div class="sval">14%</div><div class="slb">스포티파이<br>점유율 3위</div><div class="strend up">↑ 3배 급성장</div></div>
+    <div class="stat"><div class="sval">56%</div><div class="slb">해외 플랫폼<br>합산 점유율</div><div class="strend up">↑ 국내 플랫폼 역전</div></div>
+  </div>
+  <p class="note">출처: 와이즈앱·리테일 2025.4~8 / 모바일인덱스 2025 / 나무위키 스트리밍 문서 2025.5</p>
+
+  <div class="div"></div>
+  <div class="sec">플랫폼별 유효 KPI</div>
+
+  <div class="pcrd">
+    <div class="phdr">
+      <div class="picon" style="background:rgba(0,201,167,.12)">🍈</div>
+      <div><div class="pname">Melon</div><div class="pmau">MAU ~623만 · K-POP 차트 공신력 1번지 · 팬덤 총공 최적화 플랫폼</div></div>
+      <a href="https://www.melon.com/chart/" target="_blank" class="livelink" style="margin-left:auto"><span class="livdot"></span>실시간 TOP100</a>
+    </div>
+    <div class="pbody">
+      <div class="krow"><div class="kname">TOP100 차트 진입 순위</div><div><div class="kval">목표: TOP 50</div><div class="knew">발매 첫 주 기준</div></div></div>
+      <div class="krow"><div class="kname">24Hits 최신 차트 순위</div><div><div class="kval">목표: TOP 20</div><div class="knew">신인 현실적 목표치</div></div></div>
+      <div class="krow"><div class="kname">발매 24시간 UU (이용자 수)</div><div><div class="kval">목표: 10만+</div><div class="knew">팬덤 화력 측정</div></div></div>
+      <div class="krow"><div class="kname">다운로드 수</div><div><div class="kval">목표: 1만+</div><div class="knew">차트 반영 비중 60%</div></div></div>
+      <p class="note">집계: 스트리밍 40% + 다운로드 60% · 매 시간 업데이트 · 01:00~07:00 프리징 구간 있음</p>
+    </div>
+  </div>
+
+  <div class="pcrd">
+    <div class="phdr">
+      <div class="picon" style="background:rgba(167,139,250,.12)">⭕</div>
+      <div><div class="pname">써클차트 (Circle Chart)</div><div class="pmau">정부 공인 · 전 플랫폼 통합 · 시상식·업계 공식 기준</div></div>
+      <a href="https://circlechart.kr/" target="_blank" class="livelink" style="margin-left:auto"><span class="livdot"></span>주간 디지털 차트</a>
+    </div>
+    <div class="pbody">
+      <div class="krow"><div class="kname">주간 디지털 차트 순위</div><div><div class="kval">목표: TOP 50</div><div class="knew">시상식 기준 지표</div></div></div>
+      <div class="krow"><div class="kname">누적 써클지수</div><div><div class="kval">목표: 1억점</div><div class="knew">데뷔 첫 달 기준</div></div></div>
+      <div class="krow"><div class="kname">스트리밍 공식 인증</div><div><div class="kval">1천만 인증</div><div class="knew">6개월 내 목표</div></div></div>
+      <p class="note">집계: Spotify · Apple Music · YouTube · Melon · Vibe · Genie · FLO · Bugs 전 플랫폼 통합 · 가중치(저작인접권료 기반) 적용</p>
+    </div>
+  </div>
+
+  <div class="pcrd">
+    <div class="phdr">
+      <div class="picon" style="background:rgba(248,113,113,.12)">▶</div>
+      <div><div class="pname">YouTube / YouTube Music</div><div class="pmau">MAU ~1,012만 (점유율 1위) · 알고리즘 유입 핵심 · 버추얼 아이돌 팬덤 규모 실질 지표</div></div>
+      <a href="https://studio.youtube.com" target="_blank" class="livelink" style="margin-left:auto"><span class="livdot"></span>YouTube Studio</a>
+    </div>
+    <div class="pbody">
+      <div class="krow"><div class="kname">MV 발매 24시간 조회수</div><div><div class="kval">목표: 30~50만</div><div class="knew">버추얼 아이돌 현실 기준</div></div></div>
+      <div class="krow"><div class="kname">구독자 수</div><div><div class="kval">목표: 10만 (첫 달)</div><div class="knew">알고리즘 임계점 · Silver Button</div></div></div>
+      <div class="krow"><div class="kname">라방 최고 동시 시청자 수</div><div><div class="kval">목표: 1만+</div><div class="knew">버추얼 아이돌 팬덤 핵심 지표</div></div></div>
+      <div class="krow"><div class="kname">쇼츠 편당 조회수</div><div><div class="kval">목표: 10만+</div><div class="knew">알고리즘 진입 기준</div></div></div>
+      <div style="background:rgba(248,113,113,.06);padding:7px 10px;border-radius:7px;margin-top:8px;font-size:12px;color:#9e9bb8;line-height:1.6">
+        ⚠️ 버추얼 아이돌 특이사항: 음원 차트 순위보다 <strong style="color:var(--text)">라방 동시 시청자·구독자 증가 속도</strong>가 팬덤 규모를 더 정확하게 나타냄. MV 조회수 목표를 일반 아이돌(100만+) 대비 낮게 설정한 이유.
+      </div>
+    </div>
+  </div>
+
+  <div class="pcrd">
+    <div class="phdr">
+      <div class="picon" style="background:rgba(74,222,128,.12)">🎵</div>
+      <div><div class="pname">Spotify</div><div class="pmau">MAU ~424만 · 2024.10 무료 요금제 출시 후 3배 급성장 · 글로벌 팬덤 측정 핵심</div></div>
+      <a href="https://artists.spotify.com" target="_blank" class="livelink" style="margin-left:auto"><span class="livdot"></span>Spotify for Artists</a>
+    </div>
+    <div class="pbody">
+      <div class="krow"><div class="kname">월간 리스너 수 (Monthly Listeners)</div><div><div class="kval">목표: 10만</div><div class="knew">데뷔 1개월 내</div></div></div>
+      <div class="krow"><div class="kname">저장 수 (Library Add)</div><div><div class="kval">목표: 1만+</div><div class="knew">재청취 의도 = 리텐션 지표</div></div></div>
+      <div class="krow"><div class="kname">Editorial 플레이리스트 진입</div><div><div class="kval">1개 이상</div><div class="knew">K-POP 관련 큐레이션 PL</div></div></div>
+      <p class="note">차트 반영: 스트리밍 횟수 + 저장 + 공유 지수 복합 반영 · 2024.10 이후 국내 이용자 급증세 지속 중</p>
+    </div>
+  </div>
+
+  <div class="div"></div>
+  <div class="sec">앨범 제작 진입 KPI 기준</div>
+  <div class="card" style="margin-bottom:1.25rem;border-left:3px solid var(--muted)">
+    <div class="cb">버추얼 아이돌은 일반 아이돌 대비 <strong style="color:var(--text)">음원 차트 성과가 낮고 팬덤 응집에 3~6개월 소요</strong>. 음원 차트 순위보다 <strong style="color:var(--text)">라방 동시 시청자·유튜브 구독자·위버스 가입자 증가 속도</strong>를 우선 지표로 삼을 것. (PLAVE 팬카페 2025.10 종료 → 위버스 완전 이전 완료)</div>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="mtbl">
+      <thead><tr><th>단계</th><th>시기</th><th>트리거 KPI (충족 시)</th><th>다음 액션</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="phasebdg ph1">Phase 1</span></td>
+          <td class="cb">데뷔~2개월</td>
+          <td class="trig">YouTube 구독자 5만+<br>라방 동시 시청 5천+<br>MV 누적 50만+</td>
+          <td class="tact">선공개곡 '깃털'<br>발매 준비 확정</td>
+        </tr>
+        <tr>
+          <td><span class="phasebdg ph2">Phase 2</span></td>
+          <td class="cb">2~4개월</td>
+          <td class="trig">YouTube 구독자 10만+<br>스포티파이 월간리스너 10만+<br>멜론 TOP100 진입</td>
+          <td class="tact">데뷔 싱글/EP<br>제작 그린라이트</td>
+        </tr>
+        <tr>
+          <td><span class="phasebdg ph3">Phase 3</span></td>
+          <td class="cb">4~6개월</td>
+          <td class="trig">YouTube 구독자 30만+<br>써클차트 주간 TOP50<br>위버스 가입자 3만+</td>
+          <td class="tact">미니앨범 정식 제작<br>굿즈 연계</td>
+        </tr>
+        <tr>
+          <td><span class="phasebdg ph4">Phase 4</span></td>
+          <td class="cb">6개월+</td>
+          <td class="trig">MV 누적 500만+<br>위버스 가입자 5만+<br>스포티파이 월간리스너 30만+</td>
+          <td class="tact">정규 앨범 및<br>일본 동시 발매 검토</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight">
+    <div class="ititle">핵심 인사이트 3가지</div>
+    <div class="ibody">
+      <strong>① 라방 동시 시청자 5천 돌파</strong> = 팬덤이 "함께 소비하는 경험"을 원한다는 신호 → 굿즈·앨범 사전 수요 탐색 시작<br><br>
+      <strong>② 유튜브 구독자 10만 돌파</strong> = 알고리즘이 "검증된 채널"로 인식하는 임계점 → 이후 신곡 발매 시 자연 노출 크게 증가<br><br>
+      <strong>③ 위버스 가입자 증가 속도</strong> = 음원 차트 순위보다 충성 팬덤 규모를 더 정확하게 나타냄. 팬카페보다 위버스 중심으로 전략 수립 권장.
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CD={
+  '임온↔나이선':{t:'소울메이트즈 (임온↔나이선)',col:'#60a5fa',type:'조용한 케미 — 장기 감성 팬덤 / 여초 팬픽 유발',why:'둘 다 내성적이나 상처의 결이 다름. 임온은 외부 실패(탈락), 나이선은 내부 억압(부모 압박). 말 없이 서로를 이해하는 장면이 팬들의 상상력을 자극. 여초 팬덤 팬픽·남돌물 독자층이 이 구조를 가장 좋아함.',how:'단체 콘텐츠에서 눈빛 교환, 서로 이야기할 때 말수가 줄어드는 장면 자연 배치. 편집에서 두 사람 반응을 함께 잡아줄 것.',push:'팬 자발 발굴형 — 소속사 직접 개입 없이 편집에서 장면을 살려주는 수준으로만.'},
+  '임온↔마하진':{t:'안심즈 (임온↔마하진)',col:'#4ade80',type:'따뜻한 케미 — 서사 보조',why:'재도전하는 임온 옆에서 쾌활한 리더가 든든하게 있어주는 구도. 팬덤 안정감 제공.',how:'단체 라방에서 마하진이 임온 말에 가장 먼저 반응하거나, 임온이 흔들릴 때 마하진 시선이 향하는 장면 설계.',push:'서사 보조형 — 임온 서사가 무거워질 때 에너지 전환 역할로 활용.'},
+  '임온↔안석우':{t:'고요즈 (임온↔안석우)',col:'#60a5fa',type:'조용한 상호존중 케미',why:'두 사람 모두 말수가 많지 않음. 서로를 건드리지 않으면서 옆에 있어주는 구도.',how:'단체 라방에서 자연스럽게 옆에 배치. 특별한 연출 불필요.',push:'배경 배치형 — 별도 케미 콘텐츠 불필요.'},
+  '임온↔원주율':{t:'뒤집기즈 (임온↔원주율)',col:'#4ade80',type:'따뜻한 반전 케미',why:'"막내가 형을 챙기는" 반전 구도. 임온이 흔들릴 때 원주율의 엉뚱한 한 마디가 위로. "막내가 제일 어른" 팬덤 밈 생성 가능.',how:'임온 서사가 무거워지는 순간 원주율이 자연스럽게 분위기 전환하는 패턴 설계.',push:'서사 완화형 — 임온 개인 방송 멤버 언급 시 활용.'},
+  '나이선↔마하진':{t:'해바라기즈 🟡 (나이선↔마하진)',col:'#a78bfa',type:'핵심 케미 — 성장 서사 직결 / 세계관 팬덤 전환',why:'마하진의 플러팅에 나이선이 어쩔 줄 몰라하다 조금씩 가까워지는 구도. PLAVE 맛탕즈(예준↔노아)와 유사. 나이선 未完 성장 서사와 직결.',how:'마하진이 먼저 말 걸고 나이선이 짧게 대답하다 조금씩 길어지는 패턴 반복 배치. 성장이 보여야 함.',push:'2순위 집중 — 세계관 애니메이션·단체 라방에 적극 배치.'},
+  '나이선↔안석우':{t:'어긋즈 🟢 (나이선↔안석우)',col:'#f472b6',type:'반전·긴장 케미 — 화제성',why:'차갑게 툭툭 건드리는 안석우와 더 소심해지는 나이선. 결국 안석우가 가장 많이 신경 쓰는 반전. PLAVE 뿐라인(노아↔밤비)과 동일 원리.',how:'단체 콘텐츠에서 자연 발생 대기. 반전 장면이 나왔을 때만 편집으로 강조.',push:'자연 발생형 — 인위적 세팅은 역효과.'},
+  '나이선↔원주율':{t:'개구쟁이즈 (나이선↔원주율)',col:'#a78bfa',type:'핵심 케미 — 껍데기 깨기',why:'원주율이 소심한 나이선의 껍데기를 깨주는 구도. 나이선이 웃음을 참지 못하는 순간이 클립 폭발력 보유.',how:'원주율이 나이선에게 예상 못한 질문·행동을 하는 세션을 단체 라방에 배치.',push:'바이럴 보조형 — 당황즈와 유사하나 나이선 서사 집중.'},
+  '마하진↔안석우':{t:'무언즈 (마하진↔안석우)',col:'#00c9a7',type:'묵직한 신뢰 케미',why:'두 과묵한 인물이 함께 있는 것만으로 팬들이 신뢰감을 느낌. 팬아트·팬픽 유발에 효과적.',how:'단체 콘텐츠에서 두 사람 옆에 배치. 대화 없어도 편집에서 두 사람 리액션 함께 잡기.',push:'배경 배치형 — 별도 케미 콘텐츠 불필요.'},
+  '마하진↔원주율':{t:'균열즈 (마하진↔원주율)',col:'#a78bfa',type:'핵심 케미 — 장기 팬덤 / 여초 자생 콘텐츠',why:'과묵한 리더가 막내 앞에서만 웃음짓는 구도. 팬 자체 편집 "균열 모음" 대량 발생. 여초 팬덤이 가장 좋아하는 "리더의 약점" 서사.',how:'"마하진이 웃는 장면"을 희소하게 만들 것. 원주율 엉뚱한 말에 마하진이 피식하는 순간 의도적 설계.',push:'장기 1순위 — 균열 장면 누적될수록 팬덤 깊이가 커짐.'},
+  '안석우↔원주율':{t:'당황즈 🟣 (안석우↔원주율)',col:'#a78bfa',type:'핵심 케미 — 즉각 바이럴 / 데뷔 초 1순위',why:'냉소형 vs 에너자이저 — K-POP 최검증 바이럴 조합. PLAVE 야타즈(밤비↔은호), TXT 태현↔수빈 동일 구도로 데뷔 초 클립 수백만 뷰.',how:'안석우가 쿨하게 있을 때 원주율이 예상 못한 방향으로 말 걸거나 행동하는 세션 단체 라방에 배치.',push:'데뷔 초 1순위 — 숏폼 5개 이상 이 케미로 먼저 제작.'}
+};
+
+function showC(k){
+  const d=CD[k];if(!d)return;
+  document.getElementById('cpopcnt').innerHTML=`
+    <div style="border-left:3px solid ${d.col};padding-left:14px">
+      <div style="font-size:15px;font-weight:700;color:${d.col};margin-bottom:3px">${d.t}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:12px">${d.type}</div>
+      <div style="margin-bottom:10px"><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--teal);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">왜 이 케미인가</div><div style="font-size:13px;color:#9e9bb8;line-height:1.7">${d.why}</div></div>
+      <div style="margin-bottom:10px"><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--teal);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">어떻게 만들 것인가</div><div style="font-size:13px;color:#9e9bb8;line-height:1.7">${d.how}</div></div>
+      <div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--teal);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">소속사 전략</div><div style="font-size:13px;color:#9e9bb8;line-height:1.7">${d.push}</div></div>
+    </div>`;
+  const p=document.getElementById('cpop');
+  p.classList.add('show');
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function sw(id,btn){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('p-'+id).classList.add('on');
+}
+function swm(id,btn,col){
+  document.querySelectorAll('.mtab').forEach(t=>{t.classList.remove('on');t.style.background='transparent';t.style.color='';t.style.borderColor=''});
+  document.querySelectorAll('.mpnl').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');btn.style.background=col;btn.style.color='#000';btn.style.borderColor=col;
+  document.getElementById('m-'+id).classList.add('on');
+}
+</script>
+</body>
+</html>
